@@ -24,7 +24,7 @@ conditions:
         repository: "charts"
         token: {{ requiredEnv "GITHUB_TOKEN" }}
         username: "olblak"
-        branch: "main"
+        branch: "master"
 targets:
   updateENVHELMVERSION:
     name: Update HELM_VERSION
@@ -40,4 +40,4 @@ targets:
         repository: "charts"
         token: {{ requiredEnv "GITHUB_TOKEN" }}
         username: "olblak"
-        branch: "main"
+        branch: "master"
