@@ -16,7 +16,7 @@ import (
 	"github.com/olblak/updateCli/pkg/plugins/github"
 	"github.com/olblak/updateCli/pkg/plugins/helm/chart"
 	"github.com/olblak/updateCli/pkg/plugins/jenkins"
-	"github.com/olblak/updateCli/pkg/plugins/maven"
+	mavenRepository "github.com/olblak/updateCli/pkg/plugins/maven/repository"
 	"github.com/olblak/updateCli/pkg/plugins/yaml"
 )
 
@@ -200,7 +200,7 @@ func (s *Source) Unmarshal() (spec Spec, changelog Changelog, err error) {
 		changelog = &j
 
 	case "maven":
-		m := maven.Maven{}
+		m := mavenRepository.Maven{}
 		err := mapstructure.Decode(s.Spec, &m)
 
 		if err != nil {

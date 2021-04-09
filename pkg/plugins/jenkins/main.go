@@ -9,7 +9,8 @@ import (
 	"strings"
 
 	"github.com/olblak/updateCli/pkg/plugins/github"
-	"github.com/olblak/updateCli/pkg/plugins/maven"
+	maven "github.com/olblak/updateCli/pkg/plugins/maven/repository"
+	mavenRepository "github.com/olblak/updateCli/pkg/plugins/maven/repository"
 	"github.com/sirupsen/logrus"
 )
 
@@ -54,7 +55,7 @@ func (j *Jenkins) Validate() (err error) {
 
 // GetVersions fetch every jenkins version from the maven repository
 func GetVersions() (latest string, versions []string, err error) {
-	m := maven.Maven{
+	m := mavenRepository.Maven{
 		URL:        "repo.jenkins-ci.org",
 		Repository: "releases",
 		GroupID:    "org.jenkins-ci.main",
