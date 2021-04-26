@@ -1,4 +1,4 @@
-package maven
+package repository
 
 import (
 	"encoding/xml"
