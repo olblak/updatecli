@@ -1,10 +1,22 @@
 package generic
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 )
+
+func TestGetSCMInformation(t *testing.T) {
+	err := GetSCMInformation("/home/olblak/Project/Updatecli/updatecli")
+	//err := GetSCMInformation("/home/olblak/Project/Updatecli")
+	//err := GetSCMInformation("/home/olblak/Project/Updatecli/updatecli/updatecli")
+
+	if err != nil {
+		fmt.Printf("Unexpected error: %s", err)
+	}
+	t.Fail()
+}
 
 func TestSanitizeBranchName(t *testing.T) {
 	type dataSet struct {

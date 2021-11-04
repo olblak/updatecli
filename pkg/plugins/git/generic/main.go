@@ -382,6 +382,67 @@ func Push(username string, password string, workingDir string, force bool) error
 	return nil
 }
 
+// GETSCMInformation return scm information used by updatecli
+func GetSCMInformation(workingDir string) error {
+	gitUserName := "updatecli"
+	gitUserEmail := ""
+	gitHeadUrl := ""
+	gitHeadBranch := ""
+
+	r, err := git.PlainOpen(workingDir)
+
+	if err != nil {
+		if errors.Is(err, git.ErrRepositoryNotExists) {
+			fmt.Printf("Not a git repository: %q\n", workingDir)
+			return nil
+		} else {
+			return err
+		}
+	}
+
+	repositoryConfig, err := r.Config()
+	if err != nil {
+		return err
+	}
+
+	head, err := r.Head()
+	if err != nil {
+		return err
+	}
+
+	if !head.Name().IsBranch() {
+		logrus.Debugf("%q not a git branch", head.Name().String())
+		return nil
+	}
+
+	branch, err := r.Branch(head.Name().Short())
+
+	if err != nil {
+		return err
+	}
+
+	if _, ok := repositoryConfig.Remotes[branch.Remote]; !ok {
+		fmt.Printf("No remote %q found over %d remotes\n", branch.Remote, len(repositoryConfig.Remotes))
+		for remoteName := range repositoryConfig.URLs {
+			fmt.Println(remoteName)
+		}
+	}
+	gitHeadBranch = branch.Name
+	gitHeadUrl = repositoryConfig.Remotes[branch.Remote].URLs[0]
+
+	if len(repositoryConfig.User.Name) > 0 {
+		gitUserName = repositoryConfig.User.Name
+	}
+
+	fmt.Printf("Directory: %s\n", repositoryConfig.Core.Worktree)
+	fmt.Printf("Name: %s\n", gitUserName)
+	fmt.Printf("Email: %s\n", gitUserEmail)
+	fmt.Printf("URL: %s\n", gitHeadUrl)
+	fmt.Printf("Branch: %s\n", gitHeadBranch)
+
+	return nil
+}
+
 // SanitizeBranchName replace wrong character in the branch name
 func SanitizeBranchName(branch string) string {
 
