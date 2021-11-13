@@ -6,7 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/dockerhub"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/dockerregistry"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/quay"
