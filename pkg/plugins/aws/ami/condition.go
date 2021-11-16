@@ -64,7 +64,7 @@ func (a *AMI) Condition(source string) (bool, error) {
 }
 
 // ConditionFromSCM is a placeholder to validate the condition interface
-func (a *AMI) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+func (a *AMI) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 
 	fmt.Printf("\u2717 Condition with SCM is not supported, please remove the scm block \n")
 
