@@ -37,7 +37,7 @@ require (
 	github.com/goware/urlx v0.3.2
 	github.com/invopop/jsonschema v0.6.0
 	github.com/pelletier/go-toml v1.9.5-0.20220105141732-fed146406641
-	github.com/tomwright/dasel v1.26.1
+	github.com/tomwright/dasel v1.27.1
 	golang.org/x/text v0.3.7
 	gotest.tools v2.2.0+incompatible
 )
