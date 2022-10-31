@@ -21,7 +21,7 @@ require (
 	github.com/shurcooL/githubv4 v0.0.0-20220115235240-a14260e6f8a2
 	github.com/shurcooL/graphql v0.0.0-20200928012149-18c5c3165e3a //indirect
 	github.com/sirupsen/logrus v1.9.0
-	github.com/spf13/cobra v1.5.0
+	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.0
 	go.mozilla.org/sops/v3 v3.7.3
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
@@ -31,12 +31,12 @@ require (
 )
 
 require (
+	github.com/BurntSushi/toml v1.1.0
 	github.com/ProtonMail/go-crypto v0.0.0-20220407094043-a94812496cf5
 	github.com/beevik/etree v1.1.0
 	github.com/drone/go-scm v1.27.0
 	github.com/goware/urlx v0.3.2
 	github.com/invopop/jsonschema v0.6.0
-	github.com/pelletier/go-toml v1.9.5-0.20220105141732-fed146406641
 	github.com/tomwright/dasel v1.26.1
 	golang.org/x/text v0.3.7
 	gotest.tools v2.2.0+incompatible
@@ -54,7 +54,6 @@ require (
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
-	github.com/BurntSushi/toml v1.1.0 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
@@ -139,7 +138,7 @@ require (
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmoiron/sqlx v1.3.5 // indirect
@@ -171,6 +170,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/pelletier/go-toml v1.9.5-0.20220105141732-fed146406641 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
