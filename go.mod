@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.179
 	github.com/containerd/containerd v1.6.15 // indirect
 	github.com/fatih/color v1.14.1
-	github.com/go-git/go-git/v5 v5.5.2
+	github.com/go-git/go-git/v5 v5.6.1
 	github.com/heimdalr/dag v1.2.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/mitchellh/hashstructure v1.1.0
