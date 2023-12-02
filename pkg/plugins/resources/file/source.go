@@ -49,6 +49,15 @@ func (f *File) Source(workingDir string, resultSource *result.Source) error {
 		return fmt.Errorf("init files: %w", err)
 	}
 
+	switch len(f.files) {
+	case 0:
+		return fmt.Errorf("no file found")
+	case 1:
+		// nothing to day excepted catching the normal flow
+	default:
+		return fmt.Errorf("multiple files found, please specify only one file")
+	}
+
 	if err := f.Read(); err != nil {
 		return fmt.Errorf("reading file: %w", err)
 	}
