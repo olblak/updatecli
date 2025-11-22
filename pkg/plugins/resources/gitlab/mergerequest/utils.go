@@ -3,10 +3,16 @@ package mergerequest
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	gitlabapi "gitlab.com/gitlab-org/api/client-go"
+)
+
+const (
+	maxPipelineAttempts = 10
+	retryDelay          = 5 * time.Second
 )
 
 // findExistingMR queries a remote GitLab instance to know if a pullrequest already exists.
@@ -175,4 +181,34 @@ func (g *Gitlab) inheritFromScm() {
 	if len(g.spec.Repository) > 0 {
 		g.Repository = g.spec.Repository
 	}
+}
+
+// waitForPipeline checks for an active pipeline on the MR
+func (g *Gitlab) waitForPipeline(projectID string, mrIID int) error {
+	logrus.Infof("Checking for active pipeline on MR !%d", mrIID)
+
+	pipelineAttempt := 0
+
+	for pipelineAttempt < maxPipelineAttempts {
+		pipelineAttempt++
+
+		// Get merge request details including pipeline info
+		mr, err := g.api.MergeRequests.GetMergeRequest(projectID, mrIID)
+		if err != nil {
+			return fmt.Errorf("failed to get merge request details: %w", err)
+		}
+
+		// Check if pipeline exists
+		if mr.HeadPipeline != nil && mr.HeadPipeline.ID != 0 {
+			pipelineID := mr.HeadPipeline.ID
+			logrus.Infof("Pipeline found with ID: %d", pipelineID)
+			return fmt.Printf("Pipeline found with ID: %d", pipelineID)
+		}
+
+		logrus.Warnf("No pipeline found yet for MR (attempt %d/%d)", 
+			pipelineAttempt, maxPipelineAttempts)
+		time.Sleep(retryDelay)
+	}
+
+	return fmt.Errorf("no pipeline found after %d attempts", maxPipelineAttempts)
 }

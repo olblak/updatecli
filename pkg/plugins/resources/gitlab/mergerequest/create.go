@@ -83,6 +83,12 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 			return fmt.Errorf("update GitLab merge request: %s", err.Error())
 		}
 
+		// Verify pipeline exist before attempting a merge request
+		err := g.waitForPipeline(g.getPID(), existingMR.IID)
+		if err != nil {
+			return fmt.Errorf("pipeline check failed: %w", err)
+		}
+
 		// Set auto-merge to created Merge Request
 		// c.f. https://docs.gitlab.com/user/project/merge_requests/auto_merge/
 		if _, _, err = g.api.MergeRequests.AcceptMergeRequest(
