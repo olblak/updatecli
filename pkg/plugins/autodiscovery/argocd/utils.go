@@ -111,5 +111,9 @@ func readManifest(filename string) (map[int]*ArgoCDApplicationSpec, error) {
 		docNum++
 	}
 
+	if len(result) == 0 {
+		return nil, nil
+	}
+
 	return result, nil
 }

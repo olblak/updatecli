@@ -22,7 +22,7 @@ func TestSearchFiles(t *testing.T) {
 		"testdata/sealed-secrets_sources/manifest.yaml",
 	}
 
-	assert.Equal(t, gotFiles, expectedFiles)
+	assert.Equal(t, expectedFiles, gotFiles)
 }
 
 func TestListChartDependency(t *testing.T) {

@@ -96,7 +96,6 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 		}
 
 		for documentIndex := range maps.Keys(d) {
-			fmt.Printf("Processing file %q (document #%d)\n", foundFile, documentIndex)
 			data := d[documentIndex]
 			if !data.Spec.Source.IsZero() {
 				manifest, err := f.generateManifestBySource(
