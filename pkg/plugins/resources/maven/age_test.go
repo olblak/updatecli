@@ -224,6 +224,19 @@ func TestSourceAgeWithoutReleaseDateExplainsTheSkip(t *testing.T) {
 	assert.Contains(t, got.Description, "the repository "+m.spec.Repository)
 }
 
+func TestSourceAgeWithAndWithoutReleaseDateDoesNotAdviseRemovingIt(t *testing.T) {
+	undated := &fakeRepository{releases: []fakeRelease{{"1.0.0", -1}}}
+	m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", 1}}}, version.Filter{}, age.Spec{Minimum: "7d"})
+	m.metadataHandlers = append(m.metadataHandlers, newAgeTestMaven(t, undated, version.Filter{}, age.Spec{Minimum: "7d"}).metadataHandlers...)
+
+	got := result.Source{}
+	require.NoError(t, m.Source(context.Background(), pathresolver.Resolver{}, &got))
+	assert.Equal(t, result.SKIPPED, got.Result)
+	assert.Contains(t, got.Description, "matches the age filter yet")
+	assert.Contains(t, got.Description, "reports no release date")
+	assert.NotContains(t, got.Description, "remove it")
+}
+
 func TestSourceAgeIgnoresRepositoriesWithoutTheArtifact(t *testing.T) {
 	m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", 1}}}, version.Filter{}, age.Spec{Minimum: "7d"})
 	m.metadataHandlers = append([]mavenmetadata.Handler{&mavenmetadata.MockMetadataHandler{Err: fmt.Errorf("private repository: %w", text.ErrNotFound)}}, m.metadataHandlers...)

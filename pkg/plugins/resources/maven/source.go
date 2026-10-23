@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -65,9 +66,13 @@ func (m *Maven) Source(ctx context.Context, pathResolver pathresolver.Resolver, 
 	if isAgeHold(errs) {
 		resultSource.Result = result.SKIPPED
 		resultSource.Description = fmt.Sprintf("no version of the Maven artifact %s/%s matches the age filter yet", m.spec.GroupID, m.spec.ArtifactID)
-		if len(undated) > 0 {
+		switch {
+		case len(undated) > 0 && !slices.ContainsFunc(errs, isNoVersionMatchingAge):
+			// Removing the age filter is only advised when no repository could apply it
 			resultSource.Description = fmt.Sprintf("the age filter can't be applied to the Maven artifact %s/%s, as %s reports no release date: remove it",
 				m.spec.GroupID, m.spec.ArtifactID, describeRepositories(undated))
+		case len(undated) > 0:
+			resultSource.Description += fmt.Sprintf(", and %s reports no release date", describeRepositories(undated))
 		}
 		return nil
 	}
@@ -88,6 +93,11 @@ func (m *Maven) latestVersion(ctx context.Context, metadataHandler mavenmetadata
 	return m.versionMatchingAge(ctx, metadataHandler)
 }
 
+// isNoVersionMatchingAge returns true when the age filter discarded every dated version of a repository.
+func isNoVersionMatchingAge(err error) bool {
+	return errors.Is(err, age.ErrNoVersionMatchingAge)
+}
+
 // isAgeHold returns true when the age filter discarded or couldn't date the versions of at least
 // one repository and the other repositories don't host the artifact, as a repository declared in
 // a pom.xml or a settings.xml file rarely hosts every artifact.
@@ -96,7 +106,7 @@ func isAgeHold(errs []error) bool {
 
 	for _, err := range errs {
 		switch {
-		case errors.Is(err, age.ErrNoVersionMatchingAge), errors.Is(err, errNoReleaseDate):
+		case isNoVersionMatchingAge(err), errors.Is(err, errNoReleaseDate):
 			held = true
 		case errors.Is(err, text.ErrNotFound):
 		default:
