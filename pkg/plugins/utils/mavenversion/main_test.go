@@ -47,7 +47,8 @@ func TestCompare(t *testing.T) {
 		{a: "1.0.alpha", b: "1-alpha", expected: 0},
 		{a: "1.0.0.RC1", b: "1.0.0-sp", expected: -1},
 		{a: "1.0.1.rc", b: "1", expected: 1},
-		{a: "0.rc1", b: "rc1", expected: 1},
+		{a: "0.rc1", b: "rc1", expected: 0},
+		{a: "0.rc", b: "v1", expected: -1},
 		// Qualifier order
 		{a: "1.0-alpha-1", b: "1.0-beta-1", expected: -1},
 		{a: "1.0-beta-2", b: "1.0-milestone-1", expected: -1},
@@ -115,7 +116,7 @@ func TestCompareIsTransitive(t *testing.T) {
 	versions := []string{
 		"1", "1.0", "1-ga", "1.1", "1-1", "1-0.1", "1.foo", "1-foo", "1-foo1", "1.rc", "1-rc1", "1.RC1",
 		"1-M1", "1-alpha", "1-sp", "1-snapshot", "1.0.1-snapshot", "1.1-beta", "9.4.43", "9.4.43.v20210629",
-		"1.0.0.RC1", "1.0.0", "1.0.0-sp", "1.0.alpha", "1.0.1.rc", "1-0.alpha",
+		"1.0.0.RC1", "1.0.0", "1.0.0-sp", "1.0.alpha", "1.0.1.rc", "1-0.alpha", "0", "0.rc", "v1",
 	}
 
 	for _, a := range versions {
@@ -138,14 +139,15 @@ func TestCompareIsTransitive(t *testing.T) {
 // TestCompareIsTransitiveOnRandomVersions checks the transitivity of the ordering on random
 // versions mixing numbers, zeros and qualifiers, seeded so that a failure can be reproduced.
 func TestCompareIsTransitiveOnRandomVersions(t *testing.T) {
-	parts := []string{"0", "1", "2", "rc", "rc1", "sp", "foo", "alpha", "ga", "a1", "snapshot", "final"}
+	parts := []string{"0", "00", "1", "2", "rc", "rc1", "sp", "foo", "alpha", "ga", "a1", "snapshot", "final", "v1"}
 	separators := []string{".", "-"}
 	r := rand.New(rand.NewSource(1)) //nolint:gosec // deterministic test data
 
 	var versions []string
 	for range 60 {
-		v := "1"
-		for range r.Intn(4) + 1 {
+		// The first token is random too, as a leading zero or qualifier is where the ordering broke
+		v := parts[r.Intn(len(parts))]
+		for range r.Intn(4) {
 			v += separators[r.Intn(len(separators))] + parts[r.Intn(len(parts))]
 		}
 		versions = append(versions, v)
