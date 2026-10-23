@@ -328,6 +328,37 @@ func TestConditionAgeWithoutReleaseDateNamesTheRepository(t *testing.T) {
 	assert.Contains(t, message, "the repository "+m.spec.Repository)
 }
 
+func TestConditionAgeMismatchIgnoresRepositoriesWithoutTheArtifact(t *testing.T) {
+	m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", 1}}}, version.Filter{}, age.Spec{Minimum: "7d"})
+	m.metadataHandlers = append(m.metadataHandlers, &mavenmetadata.MockMetadataHandler{Err: fmt.Errorf("maven central: %w", text.ErrNotFound)})
+
+	got, message, err := m.Condition(context.Background(), "1.0.0", nil, pathresolver.Resolver{})
+	require.NoError(t, err)
+	assert.False(t, got)
+	assert.Contains(t, message, "does not match the age filter")
+}
+
+func TestConditionIgnoresRepositoriesWithoutTheArtifact(t *testing.T) {
+	m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", 1}}}, version.Filter{}, age.Spec{})
+	m.metadataHandlers = append(m.metadataHandlers, &mavenmetadata.MockMetadataHandler{Err: fmt.Errorf("maven central: %w", text.ErrNotFound)})
+
+	got, message, err := m.Condition(context.Background(), "2.0.0", nil, pathresolver.Resolver{})
+	require.NoError(t, err)
+	assert.False(t, got)
+	assert.Contains(t, message, "is not found")
+}
+
+func TestConditionFailsWhenNoRepositoryHostsTheArtifact(t *testing.T) {
+	m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", 1}}}, version.Filter{}, age.Spec{})
+	m.metadataHandlers = []mavenmetadata.Handler{
+		&mavenmetadata.MockMetadataHandler{Err: fmt.Errorf("private repository: %w", text.ErrNotFound)},
+		&mavenmetadata.MockMetadataHandler{Err: fmt.Errorf("maven central: %w", text.ErrNotFound)},
+	}
+
+	_, _, err := m.Condition(context.Background(), "1.0.0", nil, pathresolver.Resolver{})
+	require.ErrorIs(t, err, text.ErrNotFound)
+}
+
 func TestNewInvalidAge(t *testing.T) {
 	_, err := New(Spec{GroupID: "org.example", ArtifactID: "lib", Age: age.Spec{Minimum: "soon"}})
 	require.ErrorContains(t, err, "wrong age spec")

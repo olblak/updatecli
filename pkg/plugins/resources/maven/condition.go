@@ -9,6 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
@@ -32,6 +33,9 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 	// errs holds the failures retrieving the release date, reported when no repository dates the
 	// version within the age filter, as a failure such as wrong credentials mustn't be hidden.
 	var errs []error
+	// notFound holds the repositories not hosting the artifact, such as Maven Central for a private
+	// artifact, reported only when no repository hosts it, as the artifact is then likely misspelled.
+	var notFound []error
 
 	for _, metadataHandler := range m.metadataHandlers {
 		// metadataURL contains the URL without username/password
@@ -41,6 +45,11 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 		}
 
 		versions, err := metadataHandler.GetVersions()
+		if errors.Is(err, text.ErrNotFound) {
+			// Another repository may host the artifact
+			notFound = append(notFound, err)
+			continue
+		}
 		if err != nil {
 			return false, "", err
 		}
@@ -84,6 +93,10 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 	if len(undated) > 0 {
 		return false, fmt.Sprintf("Version %s of Maven artifact (%s/%s) has no release date on %s, so the age filter can't be applied: remove it",
 			m.spec.Version, m.spec.GroupID, m.spec.ArtifactID, describeRepositories(undated)), nil
+	}
+
+	if len(notFound) == len(m.metadataHandlers) && len(notFound) > 0 {
+		return false, "", fmt.Errorf("no repository hosts the Maven artifact %s/%s: %w", m.spec.GroupID, m.spec.ArtifactID, errors.Join(notFound...))
 	}
 
 	return false, fmt.Sprintf("Version %s is not found for Maven artifact (%s/%s)",
