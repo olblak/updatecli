@@ -40,12 +40,6 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 	hosted := false
 
 	for _, metadataHandler := range m.metadataHandlers {
-		// metadataURL contains the URL without username/password
-		metadataURL, err := trimUsernamePasswordFromURL(metadataHandler.GetMetadataURL())
-		if err != nil {
-			return false, "", fmt.Errorf("trying to parse Maven metadata url: %s", err)
-		}
-
 		versions, err := metadataHandler.GetVersions()
 		if errors.Is(err, text.ErrNotFound) {
 			// Another repository may host the artifact
@@ -84,7 +78,7 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 		}
 
 		return true, fmt.Sprintf("Version %s is available on the Maven Repository (%s)",
-			m.spec.Version, redact.URL(metadataURL)), nil
+			m.spec.Version, redact.URL(metadataHandler.GetMetadataURL())), nil
 	}
 
 	if len(errs) > 0 {

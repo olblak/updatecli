@@ -24,12 +24,6 @@ func (m *Maven) Source(ctx context.Context, pathResolver pathresolver.Resolver, 
 	var undated []string
 
 	for _, metadataHandler := range m.metadataHandlers {
-		// metadataURL contains the URL without username/password
-		metadataURL, err := trimUsernamePasswordFromURL(metadataHandler.GetMetadataURL())
-		if err != nil {
-			log.Errorf("Trying to parse Maven metadata url: %s", err)
-		}
-
 		latestVersion, err := m.latestVersion(ctx, metadataHandler)
 		if err != nil {
 			errs = append(errs, err)
@@ -52,7 +46,7 @@ func (m *Maven) Source(ctx context.Context, pathResolver pathresolver.Resolver, 
 				description = "Latest version matching the age filter"
 			}
 			resultSource.Description = fmt.Sprintf("%s is %s on the Maven repository at %s",
-				description, latestVersion, redact.URL(metadataURL))
+				description, latestVersion, redact.URL(metadataHandler.GetMetadataURL()))
 			return nil
 		}
 

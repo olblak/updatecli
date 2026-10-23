@@ -56,49 +56,22 @@ func TestIsRepositoriesContainsMavenCentral(t *testing.T) {
 
 }
 
-func TestTrimUsernamePasswordFromURL(t *testing.T) {
-	testData := []struct {
-		Name           string
-		Repository     string
-		ExpectedResult string
-		WantErr        bool
+func TestRepositoryURL(t *testing.T) {
+	tests := []struct {
+		metadataURL string
+		expected    string
 	}{
-		{
-			Name:           "test 1",
-			Repository:     "https://username:password@example.com",
-			ExpectedResult: "https://example.com",
-		},
-		{
-			Name:           "test 2",
-			Repository:     "https://username:password@example.com",
-			ExpectedResult: "https://example.com",
-		},
-		{
-			Name:           "test 3",
-			Repository:     "https://username:password@example.com/registry",
-			ExpectedResult: "https://example.com/registry",
-		},
-		{
-			Name:           "test 4",
-			Repository:     "https://username:password@example.com",
-			ExpectedResult: "https://example.com",
-		},
+		{metadataURL: "https://example.com/org/example/lib/maven-metadata.xml", expected: "https://example.com/org/example/lib/"},
+		// The port, often set on a self hosted repository, is kept
+		{metadataURL: "https://example.com:8443/registry/org/example/lib/maven-metadata.xml", expected: "https://example.com:8443/registry/org/example/lib/"},
+		{metadataURL: "https://username:password@example.com:8443/registry/org/example/lib/maven-metadata.xml", expected: "https://****:****@example.com:8443/registry/org/example/lib/"},
 	}
 
-	for _, tt := range testData {
-		t.Run(tt.Name, func(t *testing.T) {
-			gotResult, gotError := trimUsernamePasswordFromURL(tt.Repository)
-
-			if tt.WantErr {
-				require.Error(t, gotError)
-			} else {
-				require.NoError(t, gotError)
-			}
-
-			assert.Equal(t, tt.ExpectedResult, gotResult)
+	for _, tt := range tests {
+		t.Run(tt.metadataURL, func(t *testing.T) {
+			assert.Equal(t, tt.expected, repositoryURL(tt.metadataURL))
 		})
 	}
-
 }
 
 func TestJoinURLElem(t *testing.T) {

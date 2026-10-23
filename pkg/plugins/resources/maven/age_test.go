@@ -196,6 +196,18 @@ func TestSourceAge(t *testing.T) {
 	}
 }
 
+func TestSourceDescriptionKeepsTheRepositoryPort(t *testing.T) {
+	m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", 30}}}, version.Filter{}, age.Spec{})
+
+	got := result.Source{}
+	require.NoError(t, m.Source(context.Background(), pathresolver.Resolver{}, &got))
+	assert.Contains(t, got.Description, m.spec.Repository)
+
+	_, message, err := m.Condition(context.Background(), "1.0.0", nil, pathresolver.Resolver{})
+	require.NoError(t, err)
+	assert.Contains(t, message, m.spec.Repository)
+}
+
 func TestSourceAgeBoundsTheChecks(t *testing.T) {
 	var releases []fakeRelease
 	for i := range 2 * maxAgeChecks {
