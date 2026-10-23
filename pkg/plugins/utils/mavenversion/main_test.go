@@ -2,6 +2,7 @@ package mavenversion
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,6 +42,12 @@ func TestCompare(t *testing.T) {
 		{a: "9.4.43.v20210629", b: "9.4.43", expected: 1},
 		{a: "1-1", b: "1", expected: 1},
 		{a: "1.RC1", b: "1-M1", expected: 1},
+		// Zeros directly before a qualifier are trimmed, so the ordering stays transitive
+		{a: "1.0.0.RC1", b: "1-RC1", expected: 0},
+		{a: "1.0.alpha", b: "1-alpha", expected: 0},
+		{a: "1.0.0.RC1", b: "1.0.0-sp", expected: -1},
+		{a: "1.0.1.rc", b: "1", expected: 1},
+		{a: "0.rc1", b: "rc1", expected: 1},
 		// Qualifier order
 		{a: "1.0-alpha-1", b: "1.0-beta-1", expected: -1},
 		{a: "1.0-beta-2", b: "1.0-milestone-1", expected: -1},
@@ -108,6 +115,7 @@ func TestCompareIsTransitive(t *testing.T) {
 	versions := []string{
 		"1", "1.0", "1-ga", "1.1", "1-1", "1-0.1", "1.foo", "1-foo", "1-foo1", "1.rc", "1-rc1", "1.RC1",
 		"1-M1", "1-alpha", "1-sp", "1-snapshot", "1.0.1-snapshot", "1.1-beta", "9.4.43", "9.4.43.v20210629",
+		"1.0.0.RC1", "1.0.0", "1.0.0-sp", "1.0.alpha", "1.0.1.rc", "1-0.alpha",
 	}
 
 	for _, a := range versions {
@@ -121,6 +129,36 @@ func TestCompareIsTransitive(t *testing.T) {
 				}
 				if ab == 0 && bc == 0 {
 					assert.Equal(t, 0, ac, "%s == %s == %s", a, b, c)
+				}
+			}
+		}
+	}
+}
+
+// TestCompareIsTransitiveOnRandomVersions checks the transitivity of the ordering on random
+// versions mixing numbers, zeros and qualifiers, seeded so that a failure can be reproduced.
+func TestCompareIsTransitiveOnRandomVersions(t *testing.T) {
+	parts := []string{"0", "1", "2", "rc", "rc1", "sp", "foo", "alpha", "ga", "a1", "snapshot", "final"}
+	separators := []string{".", "-"}
+	r := rand.New(rand.NewSource(1)) //nolint:gosec // deterministic test data
+
+	var versions []string
+	for range 60 {
+		v := "1"
+		for range r.Intn(4) + 1 {
+			v += separators[r.Intn(len(separators))] + parts[r.Intn(len(parts))]
+		}
+		versions = append(versions, v)
+	}
+
+	for _, a := range versions {
+		for _, b := range versions {
+			for _, c := range versions {
+				ab, _ := Compare(a, b)
+				bc, _ := Compare(b, c)
+				ac, _ := Compare(a, c)
+				if ab <= 0 && bc <= 0 && ac > 0 {
+					t.Fatalf("%s <= %s <= %s but %s > %s", a, b, c, a, c)
 				}
 			}
 		}

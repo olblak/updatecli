@@ -97,11 +97,32 @@ func parse(version string) ([]token, error) {
 		for len(group) > 0 && group[len(group)-1].isNull() {
 			group = group[:len(group)-1]
 		}
-		trimmed = append(slices.Clone(group), trimmed...)
+		trimmed = append(trimZerosBeforeQualifiers(group, i == 0), trimmed...)
 		end = i
 	}
 
 	return trimmed, nil
+}
+
+// trimZerosBeforeQualifiers drops the zeros directly followed by a qualifier, so that "1.0.0.rc1"
+// and "1-0.rc1" equal "1-rc1". Kept, such a zero would equal a missing token against a shorter
+// version, yet outrank a qualifier against a longer one, breaking the transitivity of the ordering.
+// The first token of a version is kept, as "0.rc1" isn't "rc1".
+func trimZerosBeforeQualifiers(group []token, first bool) []token {
+	var kept []token
+	for j, t := range group {
+		if t.numeric && t.isNull() && (!first || j > 0) {
+			next := j
+			for next < len(group) && group[next].numeric && group[next].isNull() {
+				next++
+			}
+			if next < len(group) && !group[next].numeric {
+				continue
+			}
+		}
+		kept = append(kept, t)
+	}
+	return kept
 }
 
 func isDigit(c byte) bool {
