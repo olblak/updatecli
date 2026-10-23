@@ -30,12 +30,14 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 	// mismatch is set when a repository dates the version outside the age filter, reported when
 	// no other repository dates it within, as a mirror may report when it cached the version.
 	mismatch := ""
-	// errs holds the failures retrieving the release date, reported when no repository dates the
-	// version within the age filter, as a failure such as wrong credentials mustn't be hidden.
+	// errs holds the failures looking up the version or its release date, reported when no repository
+	// passes the condition, as a failure such as wrong credentials mustn't be hidden. Source does the same.
 	var errs []error
 	// notFound holds the repositories not hosting the artifact, such as Maven Central for a private
 	// artifact, reported only when no repository hosts it, as the artifact is then likely misspelled.
 	var notFound []error
+	// hosted is set once a repository hosts the artifact.
+	hosted := false
 
 	for _, metadataHandler := range m.metadataHandlers {
 		// metadataURL contains the URL without username/password
@@ -51,8 +53,11 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 			continue
 		}
 		if err != nil {
-			return false, "", err
+			// Another repository may have the version
+			errs = append(errs, err)
+			continue
 		}
+		hosted = true
 
 		if !slices.Contains(versions, m.spec.Version) {
 			continue
@@ -61,7 +66,7 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 		if !m.spec.Age.IsZero() {
 			date, dated, err := m.releaseDate(ctx, metadataHandler.GetMetadataURL(), m.spec.Version)
 			if err != nil {
-				// Another repository may report it, as Source does
+				// Another repository may report it
 				errs = append(errs, err)
 				continue
 			}
@@ -95,7 +100,7 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 			m.spec.Version, m.spec.GroupID, m.spec.ArtifactID, describeRepositories(undated)), nil
 	}
 
-	if len(notFound) == len(m.metadataHandlers) && len(notFound) > 0 {
+	if !hosted && len(notFound) > 0 {
 		return false, "", fmt.Errorf("no repository hosts the Maven artifact %s/%s: %w", m.spec.GroupID, m.spec.ArtifactID, errors.Join(notFound...))
 	}
 

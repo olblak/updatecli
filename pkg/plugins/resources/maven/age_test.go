@@ -348,6 +348,32 @@ func TestConditionIgnoresRepositoriesWithoutTheArtifact(t *testing.T) {
 	assert.Contains(t, message, "is not found")
 }
 
+func TestConditionTriesTheRepositoriesAfterAFailingOne(t *testing.T) {
+	tests := []struct {
+		name    string
+		version string
+		wantErr bool
+	}{
+		{name: "later repository has the version", version: "1.0.0"},
+		{name: "failure reported when no repository has the version", version: "2.0.0", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", 1}}}, version.Filter{}, age.Spec{})
+			m.metadataHandlers = append([]mavenmetadata.Handler{&mavenmetadata.MockMetadataHandler{Err: errors.New("500 Internal Server Error")}}, m.metadataHandlers...)
+
+			got, _, err := m.Condition(context.Background(), tt.version, nil, pathresolver.Resolver{})
+			if tt.wantErr {
+				require.ErrorContains(t, err, "500 Internal Server Error")
+				return
+			}
+			require.NoError(t, err)
+			assert.True(t, got)
+		})
+	}
+}
+
 func TestConditionFailsWhenNoRepositoryHostsTheArtifact(t *testing.T) {
 	m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", 1}}}, version.Filter{}, age.Spec{})
 	m.metadataHandlers = []mavenmetadata.Handler{
