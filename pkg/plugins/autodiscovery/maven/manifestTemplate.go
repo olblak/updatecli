@@ -3,6 +3,7 @@ package maven
 import (
 	"bytes"
 	"fmt"
+	"sync"
 	"text/template"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -110,11 +111,16 @@ conditions:
 {{- template "vulnerability" .Vulnerability }}{{ template "xmlconditions" . }}{{ template "xmltarget" . }}`
 
 // The manifest templates are constants, so they are parsed once rather than for every dependency.
+// A parsing error is returned to the caller instead of panicking.
 var (
 	// routineManifestTmpl generates the manifests bumping a dependency to its latest version.
-	routineManifestTmpl = template.Must(template.New("manifest").Parse(age.ManifestTemplate + headerTemplate + xmlTemplate + manifestTemplate))
+	routineManifestTmpl = sync.OnceValues(func() (*template.Template, error) {
+		return template.New("manifest").Parse(age.ManifestTemplate + headerTemplate + xmlTemplate + manifestTemplate)
+	})
 	// securityManifestTmpl generates the manifests updating a dependency with known vulnerabilities.
-	securityManifestTmpl = template.Must(template.New("manifest").Parse(vulnerability.ManifestTemplate + headerTemplate + xmlTemplate + securityManifestTemplate))
+	securityManifestTmpl = sync.OnceValues(func() (*template.Template, error) {
+		return template.New("manifest").Parse(vulnerability.ManifestTemplate + headerTemplate + xmlTemplate + securityManifestTemplate)
+	})
 )
 
 // manifestTemplateParams holds the values injected into manifestTemplate.
@@ -181,13 +187,18 @@ func (m Maven) withSecurityUpdate(params *manifestTemplateParams, currentVersion
 // renderManifest generates the manifest updating an artifact from its current version: a security
 // update in vulnerability mode, otherwise a bump to its latest version.
 func (m Maven) renderManifest(params manifestTemplateParams, currentVersion string) ([]byte, error) {
-	tmpl := routineManifestTmpl
+	getTmpl := routineManifestTmpl
 
 	if m.spec.Vulnerability != nil {
-		tmpl = securityManifestTmpl
+		getTmpl = securityManifestTmpl
 		m.withSecurityUpdate(&params, currentVersion)
 	} else {
 		m.withRoutineUpdate(&params, currentVersion)
+	}
+
+	tmpl, err := getTmpl()
+	if err != nil {
+		return nil, fmt.Errorf("parsing Maven manifest template: %w", err)
 	}
 
 	manifest := bytes.Buffer{}

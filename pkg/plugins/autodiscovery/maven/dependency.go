@@ -147,7 +147,7 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 
 			manifest, err := m.renderManifest(params, dependency.Version)
 			if err != nil {
-				log.Debugln(err)
+				log.Errorln(err)
 				continue
 			}
 
