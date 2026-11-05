@@ -48,6 +48,7 @@ func dependencyGroupEntries(group interface{}) ([]interface{}, bool) {
 // dependencies belong to: the group itself and every group including it, directly or not,
 // through {include-group = "..."} entries. Names are compared normalized, as PEP 735 requires,
 // and returned as declared, sorted. Include cycles, which PEP 735 forbids, don't loop.
+// Group names must not collide once normalized, which validateDependencyGroupNames ensures.
 func dependencyGroupMemberships(groups map[string]interface{}) map[string][]string {
 	declared := map[string]string{}
 	for name := range groups {
@@ -129,10 +130,33 @@ func dependencyGroupRequirements(group interface{}) []string {
 	return requirements
 }
 
+// validateDependencyGroupNames returns an error when two PEP 735 dependency group names
+// are equal once normalized, which PEP 735 requires tools to reject.
+func validateDependencyGroupNames(groups map[string]interface{}) error {
+	names := make([]string, 0, len(groups))
+	for name := range groups {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	declared := map[string]string{}
+	for _, name := range names {
+		normalized := normalizeName(name)
+		if other, found := declared[normalized]; found {
+			return fmt.Errorf("dependency groups %q and %q have the same normalized name %q", other, name, normalized)
+		}
+		declared[normalized] = name
+	}
+	return nil
+}
+
 // loadPyprojectData reads and unmarshals a pyproject.toml file.
 func loadPyprojectData(filePath string) (pyprojectTOML, error) {
 	var data pyprojectTOML
 	if _, err := toml.DecodeFile(filePath, &data); err != nil {
+		return data, fmt.Errorf("parsing %q: %w", filePath, err)
+	}
+	if err := validateDependencyGroupNames(data.DependencyGroups); err != nil {
 		return data, fmt.Errorf("parsing %q: %w", filePath, err)
 	}
 	return data, nil

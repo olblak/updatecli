@@ -1,0 +1,7 @@
+[project]
+name = "colliding-groups-project"
+dependencies = ["requests>=2.28"]
+
+[dependency-groups]
+Dev = ["pytest>=8.0"]
+dev = ["ruff>=0.4"]

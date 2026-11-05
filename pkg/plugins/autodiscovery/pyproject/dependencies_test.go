@@ -44,3 +44,14 @@ func TestDependencyGroupMemberships(t *testing.T) {
 	assert.Equal(t, []string{"a", "b"}, memberships["a"])
 	assert.Equal(t, []string{"a", "b"}, memberships["b"])
 }
+
+func TestLoadPyprojectDataCollidingDependencyGroups(t *testing.T) {
+	_, err := loadPyprojectData("testdata/colliding_dependency_groups/pyproject.toml")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `dependency groups "Dev" and "dev" have the same normalized name "dev"`)
+}
+
+func TestValidateDependencyGroupNames(t *testing.T) {
+	assert.NoError(t, validateDependencyGroupNames(map[string]interface{}{"dev": nil, "test-group": nil}))
+	assert.Error(t, validateDependencyGroupNames(map[string]interface{}{"test_group": nil, "Test.Group": nil}))
+}
